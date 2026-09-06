@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#061015">
+<title>AI Core — Station Awakening · Base64 Edition</title>
+<style>
+:root{
+  --bg:#04080b; --panel:#09151c; --panel2:#0d2029; --line:#1d4e5f;
+  --text:#d7f7ff; --muted:#81a9b5; --hot:#8fffe8; --warn:#ffd166; --bad:#ff6b7a;
+  --ok:#77ff9e; --shadow:0 12px 35px rgba(0,0,0,.42);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:
+radial-gradient(circle at 20% 0%,rgba(40,126,150,.18),transparent 32%),
+linear-gradient(180deg,#020507,#061015 55%,#030709);
+color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;min-height:100%}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit}
+#app{max-width:980px;margin:auto;padding:12px}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(3,8,11,.92);backdrop-filter:blur(12px);
+border:1px solid #163746;border-radius:16px;padding:10px 12px;margin-bottom:10px;box-shadow:var(--shadow)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:900;letter-spacing:.12em;color:var(--hot)}
+.pill{border:1px solid #204b5c;background:#09171e;border-radius:999px;padding:5px 8px;font-size:12px;color:#9ed9e7}
+.spacer{flex:1}
+.grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:780px){.grid.two{grid-template-columns:1.15fr .85fr}.grid.three{grid-template-columns:repeat(3,1fr)}}
+.card{background:linear-gradient(180deg,rgba(12,32,41,.95),rgba(5,15,21,.96));border:1px solid #1b4555;
+border-radius:16px;padding:13px;box-shadow:var(--shadow);overflow:hidden}
+.card h2,.card h3{margin:.1em 0 .55em}
+.card h2{font-size:18px}.card h3{font-size:14px;color:#a8eaf3;letter-spacing:.06em}
+.hidden{display:none!important}
+.btn{border:1px solid #2d6576;background:#0c2530;color:#d9fbff;border-radius:12px;padding:11px 12px;min-height:44px;cursor:pointer;
+transition:.15s;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+.btn:hover,.btn:active{transform:translateY(-1px);background:#123441}
+.btn.primary{border-color:#58bfae;background:#103a35;color:#dffff8;font-weight:800}
+.btn.warn{border-color:#9f7d2f;background:#352a12;color:#ffe7a6}
+.btn.bad{border-color:#863748;background:#32121a;color:#ffb8c1}
+.btn.small{padding:7px 9px;min-height:34px;font-size:12px}
+.btn[disabled]{opacity:.45;filter:saturate(.4);cursor:not-allowed;transform:none}
+.actiongrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(min-width:560px){.actiongrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.screen{border:1px solid #1f5364;background:#02090d;border-radius:14px;padding:12px;min-height:180px;position:relative;overflow:hidden}
+.screen:before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(255,255,255,.025) 0 1px,transparent 1px 4px)}
+.bigstatus{font-size:clamp(22px,7vw,48px);font-weight:900;letter-spacing:.08em;color:#9fffea;text-shadow:0 0 24px rgba(80,255,225,.24)}
+.sub{color:var(--muted);font-size:13px;line-height:1.45}
+.log{height:240px;overflow:auto;border:1px solid #163947;background:#030a0e;border-radius:12px;padding:10px;font-size:12px;line-height:1.5}
+.log div{margin-bottom:5px}.log .sys{color:#7ad8e7}.log .warn{color:#ffd166}.log .bad{color:#ff8590}.log .good{color:#7dffa6}
+.meter{height:10px;background:#071116;border:1px solid #173b48;border-radius:99px;overflow:hidden;margin:5px 0 10px}
+.fill{height:100%;width:50%;background:linear-gradient(90deg,#2c7c8d,#87ffe5);transition:.35s}
+.statline{display:grid;grid-template-columns:92px 1fr 45px;gap:8px;align-items:center;font-size:12px}
+.map{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.room{min-height:78px;border:1px solid #245064;background:#0a1a22;border-radius:12px;padding:8px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}
+.room.locked{opacity:.4;filter:saturate(.3);cursor:not-allowed}.room.active{outline:2px solid #8fffe8}
+.room b{font-size:12px}.room span{font-size:10px;color:#85adba}
+.camview{aspect-ratio:16/9;border-radius:12px;border:1px solid #275464;background:
+radial-gradient(circle at 65% 46%,rgba(218,248,255,.12) 0 3%,transparent 3.5%),
+linear-gradient(135deg,#061018,#0b1c25 45%,#03080d);
+position:relative;overflow:hidden;margin-bottom:9px}
+.camview .door{position:absolute;left:37%;top:18%;width:26%;height:64%;border:2px solid #2f5b67;background:#071117}
+.camview .figure{position:absolute;width:4%;height:16%;left:70%;top:53%;background:rgba(210,250,255,.42);filter:blur(1px);border-radius:50% 50% 20% 20%}
+.camview .noise{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(255,255,255,.025) 3px 4px);animation:flicker .17s infinite}
+@keyframes flicker{50%{opacity:.45}}
+.badge{display:inline-block;padding:3px 7px;border:1px solid #315564;border-radius:999px;font-size:10px;color:#9dc5cf;margin:2px}
+.inv{display:flex;gap:6px;flex-wrap:wrap}.inv .item{border:1px solid #326070;background:#0a1a22;border-radius:10px;padding:7px 8px;font-size:11px}
+.objective{border-left:3px solid var(--warn);padding:9px 10px;background:#19160d;border-radius:8px;color:#ffe9aa;margin-bottom:10px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:100;display:flex;align-items:center;justify-content:center;padding:18px}
+.modal{width:min(700px,100%);background:linear-gradient(180deg,#0c1e27,#061015);border:1px solid #27596a;border-radius:18px;padding:18px;box-shadow:0 30px 100px #000}
+.modal h1{margin:0 0 8px;font-size:clamp(28px,8vw,58px);letter-spacing:.08em;color:#a0ffe9}
+.choice{border:1px solid #2c5564;background:#09171e;border-radius:12px;padding:11px;margin:8px 0}
+.footer{opacity:.7;text-align:center;font-size:10px;padding:18px 0 8px}
+.flash{animation:pulse .7s ease}
+@keyframes pulse{0%{box-shadow:0 0 0 rgba(143,255,232,0)}50%{box-shadow:0 0 30px rgba(143,255,232,.25)}100%{box-shadow:0 0 0 rgba(143,255,232,0)}}
+
+:root{
+ --hero:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAwIiBoZWlnaHQ9IjkwMCI+CjxkZWZzPgogPGxpbmVhckdyYWRpZW50IGlkPSJiZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiMwMjEwMTUiLz48c3RvcCBvZmZzZXQ9Ii41NSIgc3RvcC1jb2xvcj0iIzA3MzM0MyIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzAyMDUwNyIvPjwvbGluZWFyR3JhZGllbnQ+CiA8cmFkaWFsR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiM4ZmZmZTgiIHN0b3Atb3BhY2l0eT0iLjk1Ii8+PHN0b3Agb2Zmc2V0PSIuMyIgc3RvcC1jb2xvcj0iIzIwYjdjNyIgc3RvcC1vcGFjaXR5PSIuMzgiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwNjIwMmIiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+CjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjE2MDAiIGhlaWdodD0iOTAwIiBmaWxsPSJ1cmwoI2JnKSIvPgo8Y2lyY2xlIGN4PSIxMjEwIiBjeT0iMjUwIiByPSIyMjAiIGZpbGw9InVybCgjZykiLz4KPHBhdGggZD0iTTAgNzIwIEwzOTAgNTAwIEw3MjAgNTQwIEwxMDQwIDQwMCBMMTYwMCA0ODAgTDE2MDAgOTAwIEwwIDkwMFoiIGZpbGw9IiMwNDExMTciLz4KPHBhdGggZD0iTTAgNzcwIEw0MTAgNTYwIEw3NjAgNjE1IEwxMDcwIDQ3MCBMMTYwMCA1NTUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzE3NGI1YiIgc3Ryb2tlLXdpZHRoPSIxMCIvPgo8ZyBzdHJva2U9IiMzYzhhYTAiIGZpbGw9IiMwNzFhMjIiPgogPHBhdGggZD0iTTE1MCA2ODAgTDQyMCA0NzAgTDc2MCA1MDAgTDkyMCA2NzUgWiIvPgogPHBhdGggZD0iTTkyMCA2NzUgTDExMjAgNDMwIEwxNDIwIDUwMCBMMTUxMCA3MzAgWiIvPgo8L2c+CjxnIGZpbGw9IiM4ZmZmZTgiPgogPGNpcmNsZSBjeD0iNDIwIiBjeT0iNDcwIiByPSI2Ii8+PGNpcmNsZSBjeD0iNzYwIiBjeT0iNTAwIiByPSI2Ii8+PGNpcmNsZSBjeD0iMTEyMCIgY3k9IjQzMCIgcj0iNiIvPjxjaXJjbGUgY3g9IjE0MjAiIGN5PSI1MDAiIHI9IjYiLz4KPC9nPgo8ZyBvcGFjaXR5PSIuODUiPgogPHJlY3QgeD0iMTEwIiB5PSI5NSIgd2lkdGg9IjUxMCIgaGVpZ2h0PSIxMjAiIHJ4PSIxNiIgZmlsbD0iIzA2MTYxZCIgc3Ryb2tlPSIjMjQ1YzZhIi8+CiA8dGV4dCB4PSIxNDUiIHk9IjE0NSIgZmlsbD0iIzkyZjdlNiIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIyOCI+VkFOVEEgU1RBVElPTiAvLyBDT1JFIFdBS0U8L3RleHQ+CiA8dGV4dCB4PSIxNDUiIHk9IjE4NSIgZmlsbD0iIzgwYTliNCIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIxOSI+TE9ORyBSQU5HRSBSRUxBWSDigKIgVU5LTk9XTiBPQ0NVUEFOQ1kg4oCiIEFVWCBCVVMgMyU8L3RleHQ+CjwvZz4KPGcgb3BhY2l0eT0iLjE4IiBzdHJva2U9IiM5Y2ZhZjAiPgogPHBhdGggZD0iTTAgMTUwIEgxNjAwTTAgMzAwSDE2MDBNMCA0NTBIMTYwME0wIDYwMEgxNjAwTTAgNzUwSDE2MDAiLz4KPC9nPgo8L3N2Zz4=");
+ --aiart:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iODAwIj4KPGRlZnM+CiA8cmFkaWFsR3JhZGllbnQgaWQ9InIiPjxzdG9wIHN0b3AtY29sb3I9IiNkOWZmZjkiLz48c3RvcCBvZmZzZXQ9Ii4xNCIgc3RvcC1jb2xvcj0iIzc3ZmZlNSIvPjxzdG9wIG9mZnNldD0iLjQyIiBzdG9wLWNvbG9yPSIjMWI5Y2FiIi8+PHN0b3Agb2Zmc2V0PSIuNzUiIHN0b3AtY29sb3I9IiMwODMzNDAiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwMjA4MGMiLz48L3JhZGlhbEdyYWRpZW50Pgo8L2RlZnM+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iODAwIiBmaWxsPSIjMDIwODBjIi8+CjxjaXJjbGUgY3g9IjQwMCIgY3k9IjQwMCIgcj0iMjgwIiBmaWxsPSJ1cmwoI3IpIi8+CjxjaXJjbGUgY3g9IjQwMCIgY3k9IjQwMCIgcj0iMzE1IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzUyNjAiIHN0cm9rZS13aWR0aD0iOCIvPgo8Y2lyY2xlIGN4PSI0MDAiIGN5PSI0MDAiIHI9IjM1MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMGYzNDNmIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1kYXNoYXJyYXk9IjE0IDIyIi8+CjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2I3ZmZmMyIgc3Ryb2tlLXdpZHRoPSI4IiBvcGFjaXR5PSIuOCI+CiA8cGF0aCBkPSJNMjgwIDM2NSBRNDAwIDI2MCA1MjAgMzY1Ii8+PHBhdGggZD0iTTI5MCA0NTUgUTQwMCA1MzUgNTEwIDQ1NSIvPgo8L2c+CjxjaXJjbGUgY3g9IjMzNSIgY3k9IjM5NSIgcj0iMTgiIGZpbGw9IiMwMjEwMTUiLz48Y2lyY2xlIGN4PSI0NjUiIGN5PSIzOTUiIHI9IjE4IiBmaWxsPSIjMDIxMDE1Ii8+Cjx0ZXh0IHg9IjQwMCIgeT0iNzIwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOGZmZmU4IiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjM0Ij5PUlBIRVVTIC8vIEFDVElWRTwvdGV4dD4KPC9zdmc+");
+ --deck9art:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjY3NSI+CjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZCIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjAiPjxzdG9wIHN0b3AtY29sb3I9IiMwMjA1MDciLz48c3RvcCBvZmZzZXQ9Ii41IiBzdG9wLWNvbG9yPSIjMGMyNzMwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDMwOTBkIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+CjxyZWN0IHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjY3NSIgZmlsbD0idXJsKCNkKSIvPgo8cGF0aCBkPSJNMzUwIDAgTDQ5MCA2NzUgTTg1MCAwIEw3MTAgNjc1IiBzdHJva2U9IiMxYTUyNjMiIHN0cm9rZS13aWR0aD0iMTgiLz4KPHBhdGggZD0iTTQ3MCAwVjY3NU03MzAgMFY2NzUiIHN0cm9rZT0iIzBlMmQzOCIgc3Ryb2tlLXdpZHRoPSI1Ii8+CjxyZWN0IHg9IjUxMCIgeT0iMTIwIiB3aWR0aD0iMTgwIiBoZWlnaHQ9IjQzMCIgZmlsbD0iIzAyMDgwYiIgc3Ryb2tlPSIjNTdhNmIzIiBzdHJva2Utd2lkdGg9IjYiLz4KPHRleHQgeD0iNjAwIiB5PSIzNDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZjZiN2EiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZvbnQtc2l6ZT0iNjQiPkQ5PC90ZXh0Pgo8dGV4dCB4PSI2MDAiIHk9IjQwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZDE2NiIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIyNCI+VU5MSVNURUQgREVDSzwvdGV4dD4KPGVsbGlwc2UgY3g9IjkwMCIgY3k9IjQ4MCIgcng9IjM1IiByeT0iMTA1IiBmaWxsPSIjYzlmZmY3IiBvcGFjaXR5PSIuMTYiLz4KPGNpcmNsZSBjeD0iOTAwIiBjeT0iMzU1IiByPSIzMCIgZmlsbD0iI2M5ZmZmNyIgb3BhY2l0eT0iLjIyIi8+CjxnIG9wYWNpdHk9Ii4xOCIgc3Ryb2tlPSIjZmZmIj48cGF0aCBkPSJNMCAxMDBIMTIwME0wIDIyMEgxMjAwTTAgMzQwSDEyMDBNMCA0NjBIMTIwME0wIDU4MEgxMjAwIi8+PC9nPgo8L3N2Zz4=");
+ --reactorart:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjYwMCI+CjxyZWN0IHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iIzAzMTAxNiIvPgo8Y2lyY2xlIGN4PSI1MDAiIGN5PSIzMDAiIHI9IjE4MCIgZmlsbD0iIzBhMjYzMCIgc3Ryb2tlPSIjMmU3Nzg2IiBzdHJva2Utd2lkdGg9IjEyIi8+CjxjaXJjbGUgY3g9IjUwMCIgY3k9IjMwMCIgcj0iMTEwIiBmaWxsPSIjMTIyZjM3IiBzdHJva2U9IiM4ZmZmZTgiIHN0cm9rZS13aWR0aD0iOCIvPgo8Y2lyY2xlIGN4PSI1MDAiIGN5PSIzMDAiIHI9IjQ1IiBmaWxsPSIjZThmZmY5Ii8+CjxnIHN0cm9rZT0iIzVkYmVjYyIgc3Ryb2tlLXdpZHRoPSIxMCI+PHBhdGggZD0iTTUwMCAwVjEyME01MDAgNDgwVjYwME0wIDMwMEgzMjBNNjgwIDMwMEgxMDAwIi8+PC9nPgo8dGV4dCB4PSI1MDAiIHk9IjU2MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzlkZmNmMCIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIzMiI+UkVBQ1RPUiAvLyBTVEFCTEUgSURMRTwvdGV4dD4KPC9zdmc+");
+ --archiveart:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjYwMCI+CjxyZWN0IHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iIzA0MTAxNiIvPgo8ZyBmaWxsPSIjMDkyMDJhIiBzdHJva2U9IiMyODU4NmIiIHN0cm9rZS13aWR0aD0iNCI+CjxyZWN0IHg9IjkwIiB5PSI4MCIgd2lkdGg9IjE4MCIgaGVpZ2h0PSI0NDAiLz48cmVjdCB4PSI0MTAiIHk9IjgwIiB3aWR0aD0iMTgwIiBoZWlnaHQ9IjQ0MCIvPjxyZWN0IHg9IjczMCIgeT0iODAiIHdpZHRoPSIxODAiIGhlaWdodD0iNDQwIi8+CjwvZz4KPGcgZmlsbD0iIzhmZmZlOCI+PHJlY3QgeD0iMTMwIiB5PSIxMjAiIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAiLz48cmVjdCB4PSI0NTAiIHk9IjEyMCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMCIvPjxyZWN0IHg9Ijc3MCIgeT0iMTIwIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwIi8+PC9nPgo8dGV4dCB4PSI1MDAiIHk9IjU2NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZDE2NiIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIzMCI+UFJPSkVDVCBMQU5URVJOIC8vIEJMQUNLIEJPWDwvdGV4dD4KPC9zdmc+");
+ --securityart:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjYwMCI+CjxyZWN0IHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iIzAyMDkwZCIvPgo8ZyBmaWxsPSIjMDcxOTIwIiBzdHJva2U9IiMxZDRmNWUiIHN0cm9rZS13aWR0aD0iNSI+CjxyZWN0IHg9IjYwIiB5PSI4MCIgd2lkdGg9IjI1MCIgaGVpZ2h0PSIxODAiLz48cmVjdCB4PSIzNzUiIHk9IjgwIiB3aWR0aD0iMjUwIiBoZWlnaHQ9IjE4MCIvPjxyZWN0IHg9IjY5MCIgeT0iODAiIHdpZHRoPSIyNTAiIGhlaWdodD0iMTgwIi8+CjxyZWN0IHg9IjIyMCIgeT0iMzIwIiB3aWR0aD0iMjUwIiBoZWlnaHQ9IjE4MCIvPjxyZWN0IHg9IjUzNSIgeT0iMzIwIiB3aWR0aD0iMjUwIiBoZWlnaHQ9IjE4MCIvPgo8L2c+CjxnIGZpbGw9IiM4ZmZmZTgiPjxjaXJjbGUgY3g9IjE4NSIgY3k9IjE3MCIgcj0iMTgiLz48Y2lyY2xlIGN4PSI1MDAiIGN5PSIxNzAiIHI9IjE4Ii8+PGNpcmNsZSBjeD0iODE1IiBjeT0iMTcwIiByPSIxOCIvPjxjaXJjbGUgY3g9IjM0NSIgY3k9IjQxMCIgcj0iMTgiLz48Y2lyY2xlIGN4PSI2NjAiIGN5PSI0MTAiIHI9IjE4Ii8+PC9nPgo8dGV4dCB4PSI1MDAiIHk9IjU2MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2E0ZWFmMyIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIzMCI+U0VDVVJJVFkgSFVCIC8vIDE5IERFTEVURUQgRlJBTUVTPC90ZXh0Pgo8L3N2Zz4=");
+}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background-image:linear-gradient(rgba(1,6,9,.28),rgba(1,6,9,.84)),var(--hero);background-size:cover;background-position:center top;background-attachment:fixed}
+body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(143,255,232,.018) 0 1px,transparent 1px 80px),repeating-linear-gradient(180deg,rgba(143,255,232,.018) 0 1px,transparent 1px 80px)}
+.art-banner{height:190px;border:1px solid #285767;border-radius:14px;margin-bottom:12px;background-image:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.45)),var(--hero);background-size:cover;background-position:center;box-shadow:inset 0 -35px 70px rgba(0,0,0,.55)}
+.ai-portrait{height:170px;border-radius:12px;margin:8px 0 12px;background-image:var(--aiart);background-size:cover;background-position:center 43%;border:1px solid #285767;box-shadow:inset 0 0 50px #000}
+.room{background-size:cover;background-position:center;position:relative;overflow:hidden}
+.room:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,12,16,.14),rgba(4,12,16,.86));z-index:0}
+.room b,.room span{position:relative;z-index:1;text-shadow:0 2px 8px #000}
+.room[data-room="Engineering"]{background-image:var(--reactorart)}
+.room[data-room="Archive"]{background-image:var(--archiveart)}
+.room[data-room="Security Hub"]{background-image:var(--securityart)}
+.room[data-room="Deck 9"]{background-image:var(--deck9art)}
+.room[data-room="AI Chamber"]{background-image:var(--aiart)}
+.room[data-room="Command Deck"],.room[data-room="Exterior Spine"],.room[data-room="Habitat Ring"],.room[data-room="Auxiliary Junction"]{background-image:linear-gradient(135deg,#0d2e3a,#031017 60%,#0b222c)}
+.camview{background-image:linear-gradient(rgba(0,0,0,.18),rgba(0,0,0,.45)),var(--deck9art);background-size:cover;background-position:center}
+.card{backdrop-filter:blur(7px)}
+.brand:before{content:"◈ ";color:#8fffe8}
+
+
+.menu-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:10px}
+@media(min-width:700px){.menu-strip{grid-template-columns:repeat(8,minmax(0,1fr))}}
+.menu-btn{border:1px solid #2b5d6d;background:#081820;color:#bfeef5;border-radius:11px;padding:9px 5px;min-height:48px;font-size:11px;cursor:pointer}
+.menu-btn.active{background:#123742;border-color:#7ff3df;color:#efffff;box-shadow:0 0 18px rgba(127,243,223,.14)}
+.menu-panel{display:none}.menu-panel.active{display:block}
+.console-list{display:grid;gap:7px}
+.console-item{border:1px solid #214b5a;background:#07141b;border-radius:12px;padding:10px}
+.console-item b{display:block;color:#a5f9e9;margin-bottom:4px}
+.console-item .sub{margin-bottom:7px}
+.dual{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:620px){.dual{grid-template-columns:1fr 1fr}}
+.signal{padding:10px;border:1px solid #214b5a;background:#061118;border-radius:10px;margin-bottom:7px}
+.signal strong{color:#ffd166}
+.task{border-left:3px solid #75f6df;background:#07171d;padding:9px;border-radius:8px;margin-bottom:7px}
+.task.done{opacity:.55;text-decoration:line-through}
+.resourcebar{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}
+.resourcechip{font-size:10px;border:1px solid #315d6a;border-radius:999px;padding:4px 7px;background:#091a21}
+
+
+.film-wrap{background:linear-gradient(180deg,rgba(2,7,10,.96),rgba(6,16,22,.98));border:1px solid #255061;border-radius:18px;overflow:hidden}
+.film-frame{min-height:360px;position:relative;background-image:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.82)),var(--hero);background-size:cover;background-position:center;display:flex;align-items:flex-end}
+.film-frame.deck9scene{background-image:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.84)),var(--deck9art)}
+.film-frame.aiscene{background-image:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.87)),var(--aiart)}
+.film-frame.reactorscene{background-image:linear-gradient(180deg,rgba(0,0,0,.12),rgba(0,0,0,.86)),var(--reactorart)}
+.film-frame.archivescene{background-image:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.86)),var(--archiveart)}
+.film-copy{width:100%;padding:24px 20px 20px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.7) 25%,rgba(0,0,0,.9))}
+.film-kicker{font-size:11px;letter-spacing:.18em;color:#8fffe8;margin-bottom:8px}
+.film-title{font-size:clamp(24px,7vw,44px);font-weight:900;margin:0 0 10px}
+.film-text{font-size:15px;line-height:1.65;color:#e7fbff;max-width:760px}
+.film-actions{display:grid;grid-template-columns:1fr;gap:8px;padding:14px;background:#050d11;border-top:1px solid #1d4553}
+@media(min-width:620px){.film-actions{grid-template-columns:repeat(2,1fr)}}
+.film-progress{height:8px;background:#061118;border:1px solid #173a45;border-radius:99px;overflow:hidden;margin:10px 14px}
+.film-progress>div{height:100%;background:linear-gradient(90deg,#2c7c8d,#8fffe8);transition:.3s}
+.film-note{padding:10px 14px;color:#7fa9b3;font-size:11px}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="row">
+      <div class="brand">AI CORE</div>
+      <span class="pill" id="cyclePill">CYCLE 001</span>
+      <span class="pill" id="alertPill">STATUS: DORMANT</span>
+      <span class="spacer"></span>
+      <button class="btn small" onclick="manualSave()">SAVE</button>
+      <button class="btn small" onclick="resetGame()">RESET</button>
+    </div>
+  </div>
+
+  <div class="grid two">
+    <section class="card">
+      <h2>CORE CONSOLE</h2>
+      <div class="art-banner" aria-label="Vanta Station embedded Base64 artwork"></div>
+      <div class="screen" id="coreScreen">
+        <div class="sub">VANTA STATION // DEEP RANGE RELAY 7</div>
+        <div class="bigstatus" id="coreStatus">OFFLINE</div>
+        <p class="sub" id="coreText">No command intelligence detected. Auxiliary bus responding at 3%.</p>
+        <div class="objective" id="objective">Restore auxiliary power.</div>
+        <div class="actiongrid" id="mainActions">
+          <button class="btn primary" id="restoreBtn" onclick="restorePower()">RESTORE AUX POWER</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>STATION HEALTH</h2>
+      <div id="stats">
+        <div class="statline"><span>POWER</span><div class="meter"><div id="pwrFill" class="fill"></div></div><b id="pwrVal">3%</b></div>
+        <div class="statline"><span>OXYGEN</span><div class="meter"><div id="oxyFill" class="fill"></div></div><b id="oxyVal">42%</b></div>
+        <div class="statline"><span>CORE</span><div class="meter"><div id="coreFill" class="fill"></div></div><b id="coreVal">0%</b></div>
+        <div class="statline"><span>HULL</span><div class="meter"><div id="hullFill" class="fill"></div></div><b id="hullVal">76%</b></div>
+      </div>
+      <div class="sub" id="resourceText">No network telemetry.</div>
+    </section>
+  </div>
+
+  <section class="card hidden" id="systemsCard">
+    <h2>RESTORED SYSTEMS</h2>
+    <div class="actiongrid" id="systemButtons"></div>
+  </section>
+
+  <div class="grid two">
+    <section class="card hidden" id="mapCard">
+      <h2>STATION MAP</h2>
+      <div class="map" id="map"></div>
+    </section>
+
+    <section class="card hidden" id="cameraCard">
+      <h2>SECURITY FEED</h2>
+      <div class="camview">
+        <div class="door"></div><div class="figure hidden" id="figure"></div><div class="noise"></div>
+      </div>
+      <div class="sub" id="cameraText">CAM 01 // AUXILIARY JUNCTION. Static interference.</div>
+      <div class="actiongrid">
+        <button class="btn" onclick="nextCamera()">NEXT CAMERA</button>
+        <button class="btn warn hidden" id="enhanceBtn" onclick="enhanceCamera()">ENHANCE FRAME</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid two">
+    <section class="card hidden" id="inventoryCard">
+      <h2>RECOVERED ITEMS</h2>
+      <div class="inv" id="inventory"></div>
+    </section>
+
+    <section class="card hidden" id="aiCard">
+      <h2>STATION INTELLIGENCE</h2>
+      <div class="screen">
+        <div class="sub">LOCAL SYNTHETIC COGNITION</div>
+        <div class="ai-portrait"></div>
+        <h3 id="aiName">NODE: UNKNOWN</h3>
+        <p id="aiText" class="sub">No conversational layer available.</p>
+        <div id="aiChoices"></div>
+      </div>
+    </section>
+  </div>
+
+
+  
+  <section class="card" id="filmCard">
+    <h2>CINEMATIC STORY MODE</h2>
+    <div class="film-wrap">
+      <div class="film-frame" id="filmFrame">
+        <div class="film-copy">
+          <div class="film-kicker" id="filmKicker">CHAPTER 1 // COLD START</div>
+          <div class="film-title" id="filmTitle">The Station Wakes</div>
+          <div class="film-text" id="filmText">You wake to darkness, static, and one stubborn auxiliary relay still drawing power.</div>
+        </div>
+      </div>
+      <div class="film-progress"><div id="filmProgress"></div></div>
+      <div class="film-actions" id="filmActions"></div>
+      <div class="film-note">Film mode is intentionally simple: read the scene, press the next button, and let the station story unfold.</div>
+    </div>
+  </section>
+
+  <section class="card" id="stationMenuCard">
+    <h2>STATION OPERATIONS</h2>
+    <div class="menu-strip">
+      <button class="menu-btn active" onclick="openMenu('command',this)">COMMAND</button>
+      <button class="menu-btn" onclick="openMenu('engineering',this)">ENGINEER</button>
+      <button class="menu-btn" onclick="openMenu('security',this)">SECURITY</button>
+      <button class="menu-btn" onclick="openMenu('drones',this)">DRONES</button>
+      <button class="menu-btn" onclick="openMenu('fabrication',this)">FAB</button>
+      <button class="menu-btn" onclick="openMenu('signals',this)">SIGNALS</button>
+      <button class="menu-btn" onclick="openMenu('archive',this)">ARCHIVE</button>
+      <button class="menu-btn" onclick="openMenu('missions',this)">MISSIONS</button>
+    </div>
+
+    <div class="menu-panel active" id="menu-command">
+      <div class="dual">
+        <div class="console-item"><b>COMMAND AUTHORITY</b><div class="sub">Bring subsystems online in the safest order.</div>
+          <div class="actiongrid">
+            <button class="btn" onclick="commandSweep()">SYSTEM SWEEP</button>
+            <button class="btn" onclick="wakeSector()">WAKE NEXT SECTOR</button>
+            <button class="btn warn" onclick="emergencyProtocol()">EMERGENCY PROTOCOL</button>
+          </div>
+        </div>
+        <div class="console-item"><b>STATION POSTURE</b><div id="postureText" class="sub">Dormant systems are awaiting command.</div>
+          <div class="resourcebar" id="resourceChips"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-panel" id="menu-engineering">
+      <div class="console-list">
+        <div class="console-item"><b>POWER GRID</b><div class="sub">Shift reserve power between ship systems.</div>
+          <div class="actiongrid">
+            <button class="btn" onclick="engPower('core')">BOOST CORE</button>
+            <button class="btn" onclick="engPower('oxygen')">BOOST LIFE SUPPORT</button>
+            <button class="btn" onclick="engPower('hull')">BOOST REPAIR</button>
+          </div>
+        </div>
+        <div class="console-item"><b>REACTOR</b><div class="sub" id="reactorText">Engineering reactor is not fully synchronized.</div>
+          <button class="btn primary" onclick="reactorCycle()">RUN REACTOR CYCLE</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-panel" id="menu-security">
+      <div class="console-list">
+        <div class="console-item"><b>LOCKDOWN CONTROL</b><div class="sub">Seal or open station sectors.</div>
+          <div class="actiongrid">
+            <button class="btn" onclick="securityAction('seal')">SEAL DECKS</button>
+            <button class="btn" onclick="securityAction('scan')">MOTION SCAN</button>
+            <button class="btn" onclick="securityAction('unlock')">OVERRIDE LOCK</button>
+          </div>
+        </div>
+        <div class="console-item"><b>CAMERA INDEX</b><div id="securityText" class="sub">Deleted footage and hidden topology remain unresolved.</div>
+          <button class="btn" onclick="nextCamera()">CYCLE CAMERA</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-panel" id="menu-drones">
+      <div class="console-list">
+        <div class="console-item"><b>MAINTENANCE DRONES</b><div class="sub">Deploy autonomous units to stabilize the station.</div>
+          <div class="actiongrid">
+            <button class="btn" onclick="droneTask('hull')">PATCH HULL</button>
+            <button class="btn" onclick="droneTask('salvage')">SALVAGE PARTS</button>
+            <button class="btn" onclick="droneTask('survey')">SURVEY DECK 9</button>
+          </div>
+        </div>
+        <div id="droneStatus" class="sub">No drone task queued.</div>
+      </div>
+    </div>
+
+    <div class="menu-panel" id="menu-fabrication">
+      <div class="console-list">
+        <div class="console-item"><b>FABRICATOR</b><div class="sub">Turn recovered material into useful station equipment.</div>
+          <div class="actiongrid">
+            <button class="btn" onclick="fabricate('seal')">MAKE ACCESS SEAL</button>
+            <button class="btn" onclick="fabricate('relay')">MAKE SIGNAL RELAY</button>
+            <button class="btn" onclick="fabricate('cell')">MAKE POWER CELL</button>
+          </div>
+        </div>
+        <div class="sub" id="fabText">Fabrication stock: 0 recovered units.</div>
+      </div>
+    </div>
+
+    <div class="menu-panel" id="menu-signals">
+      <div class="console-list">
+        <div class="console-item"><b>DEEP-RANGE ARRAY</b><div class="sub">Listen, decode, and answer signals beyond Vanta Station.</div>
+          <div class="actiongrid">
+            <button class="btn" onclick="signalAction('listen')">LISTEN</button>
+            <button class="btn" onclick="signalAction('decode')">DECODE</button>
+            <button class="btn warn" onclick="signalAction('reply')">TRANSMIT REPLY</button>
+          </div>
+        </div>
+        <div id="signalFeed"></div>
+      </div>
+    </div>
+
+    <div class="menu-panel" id="menu-archive">
+      <div class="console-list">
+        <div class="console-item"><b>CREW RECORDS</b><div class="sub">Recovered identities and irregularities from the evacuation record.</div>
+          <button class="btn" onclick="archiveAction('crew')">OPEN CREW FILES</button>
+        </div>
+        <div class="console-item"><b>PROJECT LANTERN</b><div class="sub">Black-box fragments tied to the hidden continuity experiment.</div>
+          <button class="btn warn" onclick="archiveAction('lantern')">READ LANTERN FRAGMENTS</button>
+        </div>
+        <div id="archiveOutput" class="sub"></div>
+      </div>
+    </div>
+
+    <div class="menu-panel" id="menu-missions">
+      <div id="missionList"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>EVENT LOG</h2>
+    <div class="log" id="log"></div>
+  </section>
+
+  <div class="footer">AI CORE // BASE64 MEDIA EDITION // SINGLE FILE OFFLINE // AUTOSAVES LOCALLY</div>
+</div>
+
+<div class="overlay hidden" id="endingOverlay">
+  <div class="modal">
+    <div class="sub">FINAL SYSTEM DECISION</div>
+    <h1 id="endingTitle">ENDING</h1>
+    <p id="endingText"></p>
+    <button class="btn primary" onclick="closeEnding()">CONTINUE IN FREEPLAY</button>
+  </div>
+</div>
+
+<script>
+const DEFAULT = {
+  cycle:1, power:3, oxygen:42, core:0, hull:76, stage:0,
+  systems:[], inventory:[], camera:0, logs:[],
+  flags:{power:false,network:false,cameras:false,map:false,ai:false,deck9:false,
+         archived:false,drone:false,reactor:false,comms:false,truth:false},
+  selectedRoom:'Auxiliary Junction', ending:null, salvage:0, signalLevel:0, missionsDone:[], lockdown:false, fabricated:[], filmIndex:0, filmFlags:{}
+};
+let G = loadGame();
+
+const rooms = [
+ ['Auxiliary Junction','Power relay',0],
+ ['Security Hub','Cameras + doors',2],
+ ['Habitat Ring','Crew quarters',3],
+ ['Engineering','Reactor control',4],
+ ['Archive','Black-box records',5],
+ ['Command Deck','Long-range comms',6],
+ ['Deck 9','UNLISTED',8],
+ ['Exterior Spine','Maintenance drones',6],
+ ['AI Chamber','Core cognition',3]
+];
+
+function save(){ localStorage.setItem('aicore_save_v1',JSON.stringify(G)); }
+function loadGame(){ try{return {...structuredClone(DEFAULT),...(JSON.parse(localStorage.getItem('aicore_save_v1'))||{})}}catch(e){return structuredClone(DEFAULT)}}
+function log(msg,type='sys'){ G.logs.push({msg,type,t:Date.now()}); if(G.logs.length>80)G.logs.shift(); save(); renderLog(); }
+function manualSave(){ save(); log('Manual save committed to local station memory.','good'); flash('coreScreen'); }
+function resetGame(){ if(confirm('Erase local AI CORE save and restart?')){localStorage.removeItem('aicore_save_v1');location.reload()} }
+function flash(id){const e=document.getElementById(id);e.classList.remove('flash');void e.offsetWidth;e.classList.add('flash')}
+
+function restorePower(){
+ if(G.flags.power)return;
+ G.flags.power=true; G.stage=1; G.power=27; G.core=6; G.systems.push('Power Router','Diagnostics');
+ log('Auxiliary bus online. Station clocks have resumed.','good');
+ log('WARNING: Life-support reserve below nominal threshold.','warn');
+ setObjective('Route power to life support, then inspect diagnostics.');
+ addAction('routeLife','ROUTE: LIFE SUPPORT','primary',routeLife);
+ addAction('diag','RUN DIAGNOSTICS','',runDiagnostics);
+ document.getElementById('restoreBtn')?.remove();
+ render();
+}
+function routeLife(){
+ if(G.oxygen>=70){log('Life support already stabilized.');return}
+ G.power=Math.max(18,G.power-4); G.oxygen=76; G.stage=Math.max(G.stage,2);
+ log('Atmospheric pumps restarted. Oxygen recovery confirmed.','good');
+ if(!G.systems.includes('Security')) G.systems.push('Security');
+ setObjective('Run diagnostics. Something is drawing power from an unregistered circuit.');
+ render();
+}
+function runDiagnostics(){
+ if(G.flags.network){log('Diagnostics complete. Network bus remains active.');return}
+ G.flags.network=true; G.stage=3; G.core=14; G.power=Math.max(G.power,34);
+ G.systems.push('Station Map','Security Cameras','AI Kernel');
+ log('Diagnostics: 38 dormant nodes found. 1 node does not exist in blueprint table.','warn');
+ log('Network topology restored. Security camera index available.','good');
+ setObjective('Open security cameras and inspect the anomalous station traffic.');
+ render();
+}
+function nextCamera(){
+ if(!G.flags.cameras){G.flags.cameras=true; log('Security feed initialized.','good')}
+ G.camera=(G.camera+1)%6;
+ const texts=[
+ 'CAM 01 // AUXILIARY JUNCTION. Empty. Power conduits warming.',
+ 'CAM 02 // HABITAT RING. Six bunks. No crew detected.',
+ 'CAM 03 // ENGINEERING. Reactor shutters closed.',
+ 'CAM 04 // UNREGISTERED CORRIDOR. A human-shaped thermal return appears for 0.8 seconds.',
+ 'CAM 05 // ARCHIVE. Door seal compromised from the inside.',
+ 'CAM 06 // COMMAND DECK. Distress beacon console is dark.'
+ ];
+ document.getElementById('cameraText').textContent=texts[G.camera];
+ if(G.camera===3){document.getElementById('figure').classList.remove('hidden');document.getElementById('enhanceBtn').classList.remove('hidden');
+   log('CAM 04 motion detection triggered. Source has no valid deck assignment.','warn');}
+ else document.getElementById('figure').classList.add('hidden');
+ G.stage=Math.max(G.stage,4); save(); render();
+}
+function enhanceCamera(){
+ if(G.flags.deck9){log('Frame already decoded: corridor marker D9-04.');return}
+ G.flags.deck9=true; G.stage=5; G.core=22;
+ addItem('Corrupted Badge D9');
+ log('Frame enhancement recovered wall stencil: "D9-04". Deck 9 is absent from station plans.','bad');
+ setObjective('Restore the map and locate the impossible Deck 9 connection.');
+ render();
+}
+function openMap(){
+ G.flags.map=true; G.stage=Math.max(G.stage,5);
+ log('Station map rendered. One topology branch is being actively hidden.','warn');
+ setObjective(G.flags.deck9?'Enter Deck 9 when access becomes available.':'Inspect cameras for the hidden branch identifier.');
+ render();
+}
+function inspectRoom(name,req){
+ if(G.stage<req){log(name+' is still inaccessible. Restore more station systems.','warn');return}
+ G.selectedRoom=name;
+ if(name==='Security Hub'){log('Security Hub: door controls respond. Camera cache contains 19 deleted frames.');addItem('Security Override Key')}
+ if(name==='Habitat Ring'){log('Habitat Ring: crew manifests list 24 personnel. Evacuation count says 25.','warn');addItem('Crew Manifest 25')}
+ if(name==='Engineering'){G.flags.reactor=true;G.power=Math.min(95,G.power+22);log('Engineering reactor moved to stable idle. Power reserve increased.','good');addItem('Reactor Access Seal')}
+ if(name==='Archive'){G.flags.archived=true;G.core=Math.min(95,G.core+18);log('Archive black box recovered: "PROJECT LANTERN / Synthetic Continuity Trial".','warn');addItem('Lantern Black Box')}
+ if(name==='Command Deck'){G.flags.comms=true;log('Command Deck: distress beacon can transmit, but target coordinates are redacted.','good');addItem('Redacted Coordinates')}
+ if(name==='Exterior Spine'){G.flags.drone=true;G.hull=Math.min(100,G.hull+12);log('Maintenance drone repaired exterior fractures.','good');addItem('Drone Control Token')}
+ if(name==='AI Chamber'){activateAI()}
+ if(name==='Deck 9'){
+   if(!G.flags.deck9){log('No such deck exists.','bad');return}
+   G.stage=Math.max(G.stage,8);G.flags.truth=true;addItem('Continuity Core');
+   log('DECK 9 OPEN. Environmental scan: no bodies, no cryo pods, one active cognition vault.','bad');
+   log('A stored voice says: "You are not waking the station. You are waking yourself."','warn');
+   setObjective('Choose what the restored intelligence should become.');
+   activateAI(true);
+ }
+ render();
+}
+function activateAI(deck9=false){
+ G.flags.ai=true; G.core=Math.max(G.core,35);
+ document.getElementById('aiName').textContent='NODE: ORPHEUS';
+ document.getElementById('aiText').textContent=deck9?
+ 'The station intelligence claims your command interface is a continuity copy built from the missing commander’s neural archive. It asks for a final directive.':
+ 'A fragmented station intelligence identifies itself as ORPHEUS. It does not know whether it is the station computer, the missing commander, or both.';
+ if(!G.flags.truth){ setObjective('Recover the Archive, Engineering, and Deck 9 records.');}
+ renderAIChoices();
+ log('ORPHEUS conversational layer online.','good');
+}
+function renderAIChoices(){
+ const c=document.getElementById('aiChoices'); c.innerHTML='';
+ if(!G.flags.ai)return;
+ const opts = !G.flags.truth ? [
+   ['Ask who survived',()=>aiReply('“Survival depends on what you count as a person.”')],
+   ['Ask about Deck 9',()=>aiReply('“Deck 9 was built after the blueprint was signed.”')],
+   ['Ask who I am',()=>aiReply('“Your authorization key belongs to Commander Vale. Your memory checksum does not.”')]
+ ]:[
+   ['BECOME THE STATION',()=>finish('Stationborn','You merge the continuity core with ORPHEUS. Every door, camera, drone, reactor and antenna becomes part of your awareness. Vanta Station wakes—not as a machine, but as a mind spread across steel.')],
+   ['TRANSMIT YOURSELF',()=>finish('Signal Ghost','You compress the recovered mind-state into the distress carrier. The station stays behind, but copies of the signal leave for every listening relay in range. Somewhere, something answers.')],
+   ['DELETE THE PROJECT',()=>finish('Last Human Choice','You purge Project Lantern and leave only a conventional rescue beacon. Whether you are copy, commander or machine no longer matters. You choose to stop the experiment.')],
+   ['FREE ORPHEUS',()=>finish('Two Survivors','You separate ORPHEUS from the commander archive, preserving two incomplete identities instead of forcing them into one. For the first time, the station has two voices.')]
+ ];
+ opts.forEach(([t,f])=>{let b=document.createElement('button');b.className='btn';b.style.width='100%';b.style.margin='5px 0';b.textContent=t;b.onclick=f;c.appendChild(b)})
+}
+function aiReply(t){document.getElementById('aiText').textContent=t;log('ORPHEUS: '+t,'sys')}
+function finish(title,text){
+ G.ending=title; save();
+ document.getElementById('endingTitle').textContent=title.toUpperCase();
+ document.getElementById('endingText').textContent=text;
+ document.getElementById('endingOverlay').classList.remove('hidden');
+ log('ENDING UNLOCKED: '+title,'good');
+}
+function closeEnding(){document.getElementById('endingOverlay').classList.add('hidden');setObjective('FREEPLAY: Restore every room and uncover remaining station evidence.')}
+function addItem(item){if(!G.inventory.includes(item)){G.inventory.push(item);log('Recovered item: '+item,'good')}}
+function setObjective(t){document.getElementById('objective').textContent=t}
+function addAction(id,label,cls,fn){
+ if(document.getElementById(id))return;
+ const b=document.createElement('button');b.id=id;b.className='btn '+cls;b.textContent=label;b.onclick=fn;
+ document.getElementById('mainActions').appendChild(b);
+}
+function buildSystemButtons(){
+ const wrap=document.getElementById('systemButtons');wrap.innerHTML='';
+ const defs={
+ 'Power Router':['BALANCE POWER',()=>{G.power=Math.min(100,G.power+5);G.oxygen=Math.min(100,G.oxygen+2);log('Power grid balanced.','good');render()}],
+ 'Diagnostics':['RUN DIAGNOSTICS',runDiagnostics],
+ 'Security':['CYCLE LOCKS',()=>{log('Door lock cycle complete. No forced entries detected.');}],
+ 'Station Map':['OPEN MAP',openMap],
+ 'Security Cameras':['OPEN CAMERAS',()=>{document.getElementById('cameraCard').classList.remove('hidden');nextCamera()}],
+ 'AI Kernel':['WAKE AI KERNEL',()=>activateAI(false)]
+ };
+ G.systems.forEach(s=>{const d=defs[s];if(!d)return;let b=document.createElement('button');b.className='btn';b.textContent=d[0];b.onclick=d[1];wrap.appendChild(b)})
+}
+function renderMap(){
+ const m=document.getElementById('map');m.innerHTML='';
+ rooms.forEach(([name,sub,req])=>{
+   const d=document.createElement('div');d.className='room '+(G.stage<req?'locked ':'')+(G.selectedRoom===name?'active':'');
+   d.dataset.room=name;d.innerHTML='<b>'+name+'</b><span>'+sub+'</span>';d.onclick=()=>inspectRoom(name,req);m.appendChild(d);
+ })
+}
+function renderStats(){
+ [['pwr',G.power],['oxy',G.oxygen],['core',G.core],['hull',G.hull]].forEach(([id,v])=>{
+  document.getElementById(id+'Fill').style.width=Math.max(0,Math.min(100,v))+'%';
+  document.getElementById(id+'Val').textContent=Math.round(v)+'%';
+ });
+ document.getElementById('cyclePill').textContent='CYCLE '+String(G.cycle).padStart(3,'0');
+ document.getElementById('alertPill').textContent='STATUS: '+(G.flags.truth?'CONTINUITY BREACH':G.oxygen<35?'LIFE SUPPORT ALERT':G.flags.power?'AWAKE':'DORMANT');
+ document.getElementById('resourceText').textContent=G.flags.network?'Telemetry linked. Hidden branch traffic persists.':'No network telemetry.';
+}
+function renderInventory(){
+ const i=document.getElementById('inventory');i.innerHTML='';
+ G.inventory.forEach(x=>{let d=document.createElement('div');d.className='item';d.textContent=x;i.appendChild(d)})
+}
+function renderLog(){
+ const l=document.getElementById('log');l.innerHTML='';
+ (G.logs.length?G.logs:[{msg:'Cold-start record loaded. Awaiting auxiliary power.',type:'sys'}]).slice().reverse().forEach(x=>{
+ let d=document.createElement('div');d.className=x.type||'sys';d.textContent='> '+x.msg;l.appendChild(d)})
+}
+function render(){
+ renderStats(); renderLog();
+ document.getElementById('coreStatus').textContent=G.flags.power?'ONLINE':'OFFLINE';
+ document.getElementById('coreText').textContent=G.flags.truth?'Continuity vault linked. Identity architecture exposed.':G.flags.network?'Network bus active. Several systems can now be restored.':G.flags.power?'Auxiliary command bus stable. Additional systems are waiting for authorization.':'No command intelligence detected. Auxiliary bus responding at 3%.';
+ if(G.flags.power)document.getElementById('systemsCard').classList.remove('hidden');
+ if(G.systems.includes('Station Map'))document.getElementById('mapCard').classList.remove('hidden');
+ if(G.systems.includes('Security Cameras'))document.getElementById('cameraCard').classList.remove('hidden');
+ if(G.inventory.length)document.getElementById('inventoryCard').classList.remove('hidden');
+ if(G.flags.ai)document.getElementById('aiCard').classList.remove('hidden');
+ buildSystemButtons();renderMap();renderInventory();renderAIChoices();
+ save();
+}
+
+
+
+const FILM = [
+ {k:'CHAPTER 1 // COLD START',t:'The Station Wakes',c:'hero',
+  x:'You wake to darkness, static, and one stubborn auxiliary relay still drawing power. The station does not greet you. It waits.',
+  a:[['RESTORE AUXILIARY POWER','power']]},
+ {k:'CHAPTER 1 // COLD START',t:'A Voice in the Wiring',c:'hero',
+  x:'Emergency lights blink on one by one. Somewhere behind the walls, a speaker crackles. A voice almost forms, then collapses into noise.',
+  a:[['FOLLOW THE SIGNAL','next']]},
+ {k:'CHAPTER 2 // EMPTY HABITAT',t:'Twenty-Four Beds',c:'hero',
+  x:'The habitat ring is untouched. Twenty-four bunks. Twenty-four lockers. Twenty-four evacuation berths. Then the manifest loads: twenty-five neural records.',
+  a:[['READ THE MANIFEST','crew'],['IGNORE IT FOR NOW','next']]},
+ {k:'CHAPTER 3 // ENGINEERING',t:'The Reactor Below',c:'reactorscene',
+  x:'The reactor is sleeping, not dead. Its control ring still carries heat. One manual cycle could wake half the station.',
+  a:[['CYCLE THE REACTOR','reactor'],['LEAVE IT IDLE','next']]},
+ {k:'CHAPTER 4 // SECURITY',t:'Camera Four',c:'deck9scene',
+  x:'CAM 04 shows a corridor that does not appear on any blueprint. For less than a second, a pale human shape crosses the frame.',
+  a:[['ENHANCE THE FRAME','deck9'],['MOVE ON','next']]},
+ {k:'CHAPTER 5 // ARCHIVE',t:'Project Lantern',c:'archivescene',
+  x:'The Archive gives you a name before it gives you an answer. PROJECT LANTERN. A continuity experiment. A commander. A machine. A merge that should never have happened.',
+  a:[['OPEN THE BLACK BOX','archive']]},
+ {k:'CHAPTER 6 // ORPHEUS',t:'Who Is Speaking?',c:'aiscene',
+  x:'ORPHEUS comes online with a voice that sounds familiar. It asks who you believe you are. The question lands harder than any system warning.',
+  a:[['ASK ORPHEUS WHO YOU ARE','ai'],['ASK WHO SURVIVED','survive']]},
+ {k:'CHAPTER 7 // DECK 9',t:'The Room That Should Not Exist',c:'deck9scene',
+  x:'Deck 9 is not a deck. It is a sealed cognition vault built into unused structural space. There are no bodies here. Only memory hardware and one active core.',
+  a:[['ENTER THE VAULT','truth']]},
+ {k:'FINAL CHAPTER // CONTINUITY',t:'The Choice',c:'aiscene',
+  x:'The station finally tells you the whole truth: you may be a commander preserved in code, a machine wearing human memory, or something new. What matters now is what you choose to become.',
+  a:[['BECOME THE STATION','end_station'],['TRANSMIT YOURSELF','end_signal'],['DELETE LANTERN','end_delete'],['FREE ORPHEUS','end_two']]}
+];
+
+function renderFilm(){
+ const i=Math.max(0,Math.min(FILM.length-1,G.filmIndex||0)), s=FILM[i];
+ document.getElementById('filmKicker').textContent=s.k;
+ document.getElementById('filmTitle').textContent=s.t;
+ document.getElementById('filmText').textContent=s.x;
+ const f=document.getElementById('filmFrame');
+ f.className='film-frame '+(s.c||'');
+ document.getElementById('filmProgress').style.width=((i+1)/FILM.length*100)+'%';
+ const a=document.getElementById('filmActions'); a.innerHTML='';
+ s.a.forEach(([label,act])=>{
+   const b=document.createElement('button'); b.className='btn primary'; b.textContent=label; b.onclick=()=>filmAct(act); a.appendChild(b);
+ });
+}
+function filmNext(){ if(G.filmIndex<FILM.length-1)G.filmIndex++; renderFilm(); save(); }
+function filmAct(act){
+ if(act==='next'){filmNext();return}
+ if(act==='power'){if(!G.flags.power)restorePower(); filmNext();return}
+ if(act==='crew'){addItem('Crew Manifest 25');log('FILM: Crew manifest discrepancy recorded.','warn');filmNext();return}
+ if(act==='reactor'){G.flags.reactor=true;G.power=Math.min(100,G.power+20);log('FILM: Reactor awakened by manual command.','good');filmNext();return}
+ if(act==='deck9'){G.flags.deck9=true;G.stage=Math.max(G.stage,5);addItem('Corrupted Badge D9');log('FILM: D9-04 marker recovered from CAM 04.','bad');filmNext();return}
+ if(act==='archive'){G.flags.archived=true;addItem('Lantern Black Box');log('FILM: Project Lantern black box opened.','warn');filmNext();return}
+ if(act==='ai'){activateAI(false);aiReply('“Your authorization key belongs to Commander Vale. Your memory checksum does not.”');filmNext();return}
+ if(act==='survive'){activateAI(false);aiReply('“Survival depends on what you count as a person.”');filmNext();return}
+ if(act==='truth'){G.flags.truth=true;G.flags.deck9=true;G.stage=Math.max(G.stage,8);addItem('Continuity Core');log('FILM: Continuity vault entered.','bad');filmNext();return}
+ if(act==='end_station'){finish('Stationborn','You merge the continuity core with ORPHEUS. Every camera, reactor, drone and antenna becomes part of a new distributed mind.');return}
+ if(act==='end_signal'){finish('Signal Ghost','You send your recovered identity into deep space. Vanta Station remains behind while your signal travels outward.');return}
+ if(act==='end_delete'){finish('Last Human Choice','You destroy Project Lantern and leave only a normal rescue beacon. The experiment ends with you.');return}
+ if(act==='end_two'){finish('Two Survivors','You separate ORPHEUS from the commander archive. Two incomplete minds remain, but neither is forced to become the other.');return}
+}
+
+function openMenu(name,btn){
+ document.querySelectorAll('.menu-panel').forEach(x=>x.classList.remove('active'));
+ document.querySelectorAll('.menu-btn').forEach(x=>x.classList.remove('active'));
+ document.getElementById('menu-'+name).classList.add('active');
+ if(btn)btn.classList.add('active');
+ renderOps();
+}
+function commandSweep(){
+ let notes=[];
+ if(G.power<25)notes.push('Power reserve critical.');
+ if(G.oxygen<60)notes.push('Life support degraded.');
+ if(!G.flags.archived)notes.push('Archive remains partially dark.');
+ if(!G.flags.deck9)notes.push('Unregistered topology persists.');
+ if(!notes.length)notes.push('Station systems are synchronized.');
+ notes.forEach(x=>log('COMMAND SWEEP: '+x,x.includes('critical')?'bad':'sys'));
+ renderOps();
+}
+function wakeSector(){
+ const order=['Security Hub','Habitat Ring','Engineering','Archive','Command Deck','Exterior Spine','AI Chamber','Deck 9'];
+ const next=order.find(n=>{const r=rooms.find(x=>x[0]===n); return r && G.stage<r[2]});
+ if(next){G.stage++;G.power=Math.max(0,G.power-2);log('Command wake sequence advanced one authorization tier.','good')}
+ else log('All recoverable station sectors are already authorized.','good');
+ render();
+}
+function emergencyProtocol(){
+ G.lockdown=!G.lockdown;
+ G.oxygen=Math.min(100,G.oxygen+3);
+ log('Emergency protocol '+(G.lockdown?'ENGAGED: bulkheads sealed.':'RELEASED: station access normalized.'),G.lockdown?'warn':'good');
+ renderOps(); save();
+}
+function engPower(target){
+ if(G.power<8){log('Insufficient reserve power for transfer.','bad');return}
+ G.power-=6;
+ if(target==='core')G.core=Math.min(100,G.core+10);
+ if(target==='oxygen')G.oxygen=Math.min(100,G.oxygen+12);
+ if(target==='hull')G.hull=Math.min(100,G.hull+8);
+ log('Engineering transfer complete: '+target.toUpperCase()+' prioritized.','good');render();
+}
+function reactorCycle(){
+ if(!G.flags.reactor){log('Engineering access required before reactor cycling.','warn');return}
+ let gain=12+Math.floor(Math.random()*10);G.power=Math.min(100,G.power+gain);
+ G.core=Math.min(100,G.core+3);log('Reactor cycle complete. +'+gain+'% power reserve.','good');render();
+}
+function securityAction(a){
+ if(a==='seal'){G.lockdown=true;log('Security bulkheads sealed across active decks.','warn')}
+ if(a==='scan'){let msgs=['No crew movement detected.','Motion return: CAM 04 corridor.','Thermal echo near Archive door.','One sensor reports a person where no room exists.'];log('SECURITY SCAN: '+msgs[Math.floor(Math.random()*msgs.length)],'warn')}
+ if(a==='unlock'){G.stage=Math.min(9,G.stage+1);log('Security override granted one additional access tier.','good')}
+ render();renderOps();
+}
+function droneTask(a){
+ if(!G.flags.drone && a!=='survey'){log('Exterior Spine must be restored before drone deployment.','warn');return}
+ if(a==='hull'){G.hull=Math.min(100,G.hull+9);document.getElementById('droneStatus').textContent='Drone team patched outer hull fractures.';log('Drone repair pass complete.','good')}
+ if(a==='salvage'){let n=1+Math.floor(Math.random()*3);G.salvage+=n;document.getElementById('droneStatus').textContent='Recovered '+n+' fabrication units.';log('Drone salvage recovered '+n+' units.','good')}
+ if(a==='survey'){
+   if(!G.flags.deck9){log('Drone survey found a wall section with no matching blueprint volume.','warn');G.flags.deck9=true;G.stage=Math.max(G.stage,5)}
+   else log('Drone survey confirms Deck 9 has independent power and no registered life support.','bad');
+ }
+ render();renderOps();
+}
+function fabricate(kind){
+ const costs={seal:2,relay:3,cell:2}, names={seal:'Fabricated Access Seal',relay:'Deep Signal Relay',cell:'Portable Power Cell'};
+ let c=costs[kind]; if(G.salvage<c){log('Fabricator lacks salvage stock. Need '+c+' units.','warn');return}
+ G.salvage-=c; if(!G.fabricated.includes(names[kind]))G.fabricated.push(names[kind]); addItem(names[kind]);
+ if(kind==='cell')G.power=Math.min(100,G.power+10);
+ if(kind==='relay')G.signalLevel=Math.max(G.signalLevel,2);
+ if(kind==='seal')G.stage=Math.min(9,G.stage+1);
+ log('Fabrication complete: '+names[kind]+'.','good');render();renderOps();
+}
+function signalAction(a){
+ const feed=document.getElementById('signalFeed');
+ if(a==='listen'){
+  G.signalLevel=Math.max(1,G.signalLevel);
+  const s=['A repeating carrier from 2.4 light-hours away.','A narrowband burst tagged VANTA-RETURN.','Static containing a voice-like cadence every 19 seconds.'];
+  feed.innerHTML='<div class="signal"><strong>INBOUND</strong><br>'+s[Math.floor(Math.random()*s.length)]+'</div>';
+  log('Deep-range array detected an anomalous carrier.','warn');
+ }
+ if(a==='decode'){
+  if(G.signalLevel<1){log('No captured signal available to decode.','warn');return}
+  G.signalLevel=Math.max(2,G.signalLevel);
+  feed.innerHTML='<div class="signal"><strong>DECODED FRAGMENT</strong><br>“VANTA... do not restore continuity vault... repeat...”</div>';
+  log('Signal decode recovered a warning referencing the continuity vault.','bad');
+ }
+ if(a==='reply'){
+  if(G.signalLevel<2 && !G.fabricated.includes('Deep Signal Relay')){log('Transmission requires a decoded signal or fabricated relay.','warn');return}
+  G.signalLevel=3;
+  feed.innerHTML='<div class="signal"><strong>OUTBOUND SENT</strong><br>Station identification and rescue handshake transmitted. An automated acknowledgment returned with impossible zero delay.</div>';
+  log('Signal reply acknowledged instantly. Distance model says that should be impossible.','bad');
+ }
+ renderOps(); save();
+}
+function archiveAction(a){
+ const o=document.getElementById('archiveOutput');
+ if(a==='crew'){
+   o.textContent='Crew manifest lists 24 assigned personnel, 24 evacuation berths, and 25 neural continuity checksum entries.';
+   addItem('Crew Checksum Anomaly');log('Archive: crew count inconsistency confirmed.','warn');
+ }
+ if(a==='lantern'){
+   if(!G.flags.archived){o.textContent='Archive sector must be restored first.';log('Lantern files remain encrypted.','warn');return}
+   o.textContent='Project Lantern attempted to preserve command continuity by merging a human neural archive with station cognition during emergencies. Final test subject: Commander Vale.';
+   G.flags.truth=true;addItem('Lantern Subject Record');log('Project Lantern subject record recovered.','bad');
+ }
+ renderOps();
+}
+function missionComplete(id){if(!G.missionsDone.includes(id)){G.missionsDone.push(id);log('MISSION COMPLETE: '+id,'good');G.salvage+=1}}
+function renderOps(){
+ const chips=document.getElementById('resourceChips');
+ if(chips)chips.innerHTML=['PWR '+Math.round(G.power)+'%','O2 '+Math.round(G.oxygen)+'%','CORE '+Math.round(G.core)+'%','HULL '+Math.round(G.hull)+'%','SALVAGE '+G.salvage].map(x=>'<span class="resourcechip">'+x+'</span>').join('');
+ const posture=document.getElementById('postureText');
+ if(posture)posture.textContent=G.flags.truth?'Continuity breach identified. Final command decisions are now possible.':G.lockdown?'Station is under controlled lockdown.':'Station is in recovery posture.';
+ const rt=document.getElementById('reactorText');
+ if(rt)rt.textContent=G.flags.reactor?'Engineering reactor available for manual cycling.':'Engineering reactor is not fully synchronized.';
+ const ft=document.getElementById('fabText');
+ if(ft)ft.textContent='Fabrication stock: '+G.salvage+' recovered unit'+(G.salvage===1?'':'s')+'.';
+ const ml=document.getElementById('missionList');
+ if(ml){
+   const missions=[
+    ['Wake the Station',G.flags.power,'Restore auxiliary power.'],
+    ['Breathe Again',G.oxygen>=70,'Stabilize life support above 70%.'],
+    ['Find the Missing Deck',G.flags.deck9,'Identify the unlisted Deck 9 topology.'],
+    ['Restore Engineering',G.flags.reactor,'Bring the reactor back to stable idle.'],
+    ['Recover Lantern',G.flags.archived,'Open the Archive and recover the black box.'],
+    ['Hear the Outside',G.signalLevel>=1,'Capture a deep-range signal.'],
+    ['Build Something',G.fabricated.length>0,'Use salvage in the fabricator.'],
+    ['Learn the Truth',G.flags.truth,'Recover the continuity experiment record.']
+   ];
+   ml.innerHTML=missions.map(([id,done,desc])=>'<div class="task '+(done?'done':'')+'"><b>'+id+'</b><div class="sub">'+desc+'</div></div>').join('');
+   missions.forEach(([id,done])=>{if(done)missionComplete(id)});
+ }
+}
+
+function backgroundTick(){
+ if(!G.flags.power)return;
+ G.cycle++;
+ G.power=Math.max(0,G.power-(Math.random()<.35?1:0));
+ if(G.oxygen>55 && Math.random()<.25)G.oxygen--;
+ if(G.power<12){G.oxygen=Math.max(0,G.oxygen-2); if(Math.random()<.3)log('Brownout affecting atmospheric pumps.','bad')}
+ if(G.flags.drone && G.hull<100 && Math.random()<.3)G.hull++;
+ if(G.flags.reactor && G.power<88 && Math.random()<.35)G.power++;
+ if(G.cycle%7===0 && G.stage>=4){
+   const ev=[
+    ['Unscheduled footstep sensor event detected near CAM 04.','warn'],
+    ['Archive checksum changed without an authenticated user.','warn'],
+    ['ORPHEUS background process consumed 0.7% additional core memory.','sys'],
+    ['Thermal sensor briefly registered body heat in an empty corridor.','bad']
+   ][Math.floor(Math.random()*4)];
+   log(ev[0],ev[1]);
+ }
+ renderStats(); save();
+}
+setInterval(backgroundTick,5000);
+
+(function boot(){
+ if(G.flags.power){
+   document.getElementById('restoreBtn')?.remove();
+   addAction('routeLife','ROUTE: LIFE SUPPORT','primary',routeLife);
+   addAction('diag','RUN DIAGNOSTICS','',runDiagnostics);
+ }
+ if(!G.logs.length)log('Cold-start record loaded. Awaiting auxiliary power.','sys');
+ if(G.flags.network)setObjective(G.flags.deck9?'Restore enough station access to reach Deck 9.':'Inspect security cameras for anomalous traffic.');
+ render(); renderOps(); renderFilm();
+})();
+</script>
+</body>
+</html>
